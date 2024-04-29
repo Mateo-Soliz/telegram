@@ -3,38 +3,59 @@ import requests
 #token bot: 7042083657:AAH6gHn257GVNwV0nKg5AmdU1ksVTiDYvXM
 #se llama Mondongo
 #@MondongosBot
-""" api = 'https://api.telegram.org/bot'
-token = '7042083657:AAH6gHn257GVNwV0nKg5AmdU1ksVTiDYvXM'
-method = '/sendMessage'
-chat_id = '-4155739726'
-text = 'Hola, soy un bot de prueba'
-url = api + token + method + '?chat_id=' + chat_id + '&text=' + text
-requests.get(url) """
+#Video: https://drive.google.com/file/d/1FdFxXuwwvYQ2lrjlctDnN-yawQLnLE1K/view?usp=sharing <- no se puede enviar muy pesado VIDEO!!!!!!!!!!!!!!!!!!!!!!!
+bots = []
+class TelegramBot:
+    def __init__(self, token, chat_id,name='MondongosBot'):
+        self.api_url = f"https://api.telegram.org/bot{token}"
+        self.chat_id = chat_id
+        self.mensajes = []
+        self.methods = ""
+        self.name = name
+        bots.append(self)
 
-class BotTelegram:
-    def __init__(self):
-        self.api = 'https://api.telegram.org/bot'
-        self.token = '7042083657:AAH6gHn257GVNwV0nKg5AmdU1ksVTiDYvXM'
-        self.chat_id = '-4155739726'
-        self.method = ''
-        self.text = ''
-        self.url = self.api + self.token + self.method + '?chat_id=' + self.chat_id + '&text=' + self.text
+    def send_text_message(self, text):
+        self.method = '/sendMessage'
+        url = f"{self.api_url}{self.method}"
+        response = requests.post(url, params={'chat_id': self.chat_id, 'text': text})
+        self.mensajes.append(response.json()['result']['message_id'])
+        return response.json()
 
-    def Send_Message(self):
-        self.method= '/sendMessage'
-        self.text = 'MARC PITO CORTO'
-        self.url = self.api + self.token + self.method + '?chat_id=' + self.chat_id + '&text=' + self.text
-        requests.get(self.url)
     def send_photo(self, photo_path):
-        method = '/sendPhoto'
-        url = f"{self.api}{self.token}{method}"
+        self.method = '/sendPhoto'
+        url = f"{self.api_url}{self.method}"
         with open(photo_path, 'rb') as photo:
             response = requests.post(url, data={'chat_id': self.chat_id}, files={'photo': photo})
-            print(response.text)
+            self.mensajes.append(response.json()['result']['message_id'])
+            return response.json()
 
+    def send_document(self, document_path):
+        self.method = '/sendDocument'
+        url = f"{self.api_url}{self.method}"
+        with open(document_path, 'rb') as document:
+            response = requests.post(url, data={'chat_id': self.chat_id}, files={'document': document})
+            self.mensajes.append(response.json()['result']['message_id'])
+            return response.json()
 
+    def delete_message(self, message_id=-1):
+        try:
+            self.method = '/deleteMessage'
+            url = f"{self.api_url}{self.method}"
+            response = requests.post(url, data={'chat_id': self.chat_id, 'message_id': self.mensajes[message_id]})
+            
+            return response.json()
+        except:
+            return 'No hay mensajes para borrar'
 
-telegram = BotTelegram()
+    def EditMessage(self, text):
+        print(self.method != '/sendMessage' and self.method != '/editMessageText')
+        if self.method != '/sendMessage' and self.method != '/editMessageText':
+            return print('No se puede editar un mensaje que no sea un texto')
+        self.method = '/editMessageText'
+        last_message = self.mensajes[-1]
+        params = {'chat_id': self.chat_id, 'message_id': last_message, 'text': text}
+        url = f"{self.api_url}{self.method}"
+        requests.post( url, params=params)
 
-telegram.Send_Message()
-telegram.send_photo('./img/mondongo.jpeg')
+    def __str__(self):
+        return f"TelegramBot: {self.api_url}, {self.chat_id}"
